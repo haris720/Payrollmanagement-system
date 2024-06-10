@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../../Documents/payrollProject_mysql"
+		},
+		{
+			"path": "../../Documents/payrollProject_mysql - Copy"
+		},
+		{
+			"path": "../../Documents/updated_payroll_mysql"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "updated_payroll_mysql"
+	}
+}
