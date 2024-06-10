@@ -142,7 +142,60 @@
                         absentCount++;
                     }
                 });
+     // Display present and absent counts
+                $('.attendance-data').append(`
+    <div class="attendance-info">
+        <div class="table-cell-4">
+            <div class="label-8">
+                <div class="text-37 present-count">Present Count: ${presentCount}</div>
+            </div>
+        </div>
+        <div class="table-cell-4">
+            <div class="label-8">
+                <div class="text-37 absent-count">Absent Count: ${absentCount}</div>
+            </div>
+        </div>
+    </div>
+`);
 
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching attendance data:', error);
+            }
+        });
+    }
+
+    // Event listener for the search button
+    $('#searchButton').click(function() {
+        // Fetch attendance data when the search button is clicked
+        const employeeID = $('#employeeIDInput').val();
+        fetchAttendanceData(employeeID);
+    });
+});
+
+              </script> -->
+
+              <script>
+                $(document).ready(function() {
+                    // Function to fetch and display attendance data based on employee ID
+                    function fetchAttendanceData(employeeID) {
+                        $.ajax({
+                            url: '/attendance',
+                            type: 'GET',
+                            data: { EmployeeID: employeeID },
+                            success: function(data) {
+                                // Clear existing data
+                                $('.attendance-data').empty();
+                
+                                let presentCount = 0;
+                                let absentCount = 0;
+                
+                                // Iterate over each attendance record and create HTML elements to display their data
+                                data.forEach(function(attendance) {
+                                    // Parse the AttendanceDate to compare with the current date
+                                    const attendanceDate = new Date(attendance.AttendanceDate);
+                                    const currentDate = new Date();
+                
                 // Display present and absent counts
                 $('.attendance-data').append(`
     <div class="attendance-info">
