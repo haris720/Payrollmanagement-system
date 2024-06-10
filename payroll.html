@@ -103,7 +103,233 @@
               </div>
               <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+                           <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
              
+       <!-- <script>
+$(document).ready(function() {
+    let currentPage = 1;
+    const limit = 10;
+
+    function fetchPayrollData(page) {
+        $.ajax({
+            url: '/payroll',
+            type: 'GET',
+            data: { page: page, limit: limit },
+            success: function(data) {
+                $('.payroll-data').empty();
+
+                if (data.length === 0 && page > 1) {
+                    currentPage--;
+                    return;
+                }
+
+                data.forEach(function(payroll) {
+                    const totalSalary = payroll.BasicSalary + (payroll.OvertimeHours * 100) + payroll.BonusAmount + payroll.BenefitAmount - payroll.TaxAmount - payroll.DeductionAmount;
+                    $('.payroll-data').append(`
+                        <div class="table-cell-4">
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.PayrollID}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37">${payroll.EmployeeID}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.BasicSalary}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.OvertimeHours}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37">${payroll.BonusAmount}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.BenefitAmount}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.PayDate}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.TaxAmount}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37"> ${payroll.DeductionAmount}</div>
+                            </div>
+                            <div class="label-8">
+                                <div class="text-37">${totalSalary}</div>
+                            </div>
+                        </div>
+                    `);
+                });
+
+                if (data.length < limit) {
+                    $('.button-6').addClass('disabled');
+                } else {
+                    $('.button-6').removeClass('disabled');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching payroll data:', error);
+            }
+        });
+    }
+
+    function updatePagination() {
+        $('.input-page .text-39').text(currentPage);
+    }
+
+    $('.button-5').click(function() {
+        if (currentPage > 1) {
+            currentPage--;
+            fetchPayrollData(currentPage);
+            updatePagination();
+        }
+    });
+
+    $('.button-6').click(function() {
+        if (!$(this).hasClass('disabled')) {
+            currentPage++;
+            fetchPayrollData(currentPage);
+            updatePagination();
+        }
+    });
+
+    $('.update-button').click(function() {
+        // Call the endpoint to update salaries when the update button is clicked
+        $.ajax({
+            url: '/update-salaries',
+            type: 'GET',
+            success: function(response) {
+                console.log('Salaries updated successfully');
+                // Fetch and display payroll data after updating salaries
+                fetchPayrollData(currentPage);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating salaries:', error);
+            }
+        });
+    });
+
+    fetchPayrollData(currentPage);
+    updatePagination();
+});
+</script>
+
+        -->
+       
+       
+       
+        <script>
+          $(document).ready(function() {
+              let currentPage = 1;
+              const limit = 10;
+          
+              function fetchPayrollData(page) {
+                  $.ajax({
+                      url: '/payroll',
+                      type: 'GET',
+                      data: { page: page, limit: limit },
+                      success: function(data) {
+                          $('.payroll-data').empty();
+          
+                          if (data.length === 0 && page > 1) {
+                              currentPage--;
+                              return;
+                          }
+          
+                          data.forEach(function(payroll) {
+                              const totalSalary = payroll.BasicSalary + (payroll.OvertimeHours * 100) + payroll.BonusAmount + payroll.BenefitAmount - payroll.TaxAmount - payroll.DeductionAmount;
+                              $('.payroll-data').append(`
+                                  <div class="table-cell-4">
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.PayrollID}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37">${payroll.EmployeeID}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.BasicSalary}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.OvertimeHours}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37">${payroll.BonusAmount}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.BenefitAmount}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.PayDate}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.TaxAmount}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37"> ${payroll.DeductionAmount}</div>
+                                      </div>
+                                      <div class="label-8">
+                                          <div class="text-37">${totalSalary}</div>
+                                      </div>
+                                  </div>
+                              `);
+                          });
+          
+                          if (data.length < limit) {
+                              $('.button-6').addClass('disabled');
+                          } else {
+                              $('.button-6').removeClass('disabled');
+                          }
+                      },
+                      error: function(xhr, status, error) {
+                          console.error('Error fetching payroll data:', error);
+                      }
+                  });
+              }
+          
+              function updatePagination() {
+                  $('.input-page .text-39').text(currentPage);
+              }
+          
+              $('.button-5').click(function() {
+                  if (currentPage > 1) {
+                      currentPage--;
+                      fetchPayrollData(currentPage);
+                      updatePagination();
+                  }
+              });
+          
+              $('.button-6').click(function() {
+                  if (!$(this).hasClass('disabled')) {
+                      currentPage++;
+                      fetchPayrollData(currentPage);
+                      updatePagination();
+                  }
+              });
+          
+              // Function to fetch payroll data and update salaries every 2 minutes
+              function updateSalariesAutomatically() {
+                  fetch('/update-salaries')
+                      .then(response => {
+                          if (response.ok) {
+                              console.log('Salaries updated successfully');
+                              fetchPayrollData(currentPage); // Update payroll data after updating salaries
+                          } else {
+                              throw new Error('Failed to update salaries');
+                          }
+                      })
+                      .catch(error => console.error('Error updating salaries:', error));
+              }
+          
+              // Initial call to fetch payroll data
+              fetchPayrollData(currentPage);
+          
+              // Schedule automatic salary update every 2 minutes
+              setInterval(updateSalariesAutomatically, 1 * 60 * 1000);
+          });
+          </script>
+          
+
        <!-- <script>
 $(document).ready(function() {
     let currentPage = 1;
