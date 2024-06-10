@@ -104,45 +104,7 @@
                   </div>
               </div>
               <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-              <!-- <script>
-                $(document).ready(function() {
-    // Function to fetch and display attendance data based on employee ID
-    function fetchAttendanceData(employeeID) {
-        $.ajax({
-            url: '/attendance',
-            type: 'GET',
-            data: { EmployeeID: employeeID },
-            success: function(data) {
-                // Clear existing data
-                $('.attendance-data').empty();
-
-                let presentCount = 0;
-                let absentCount = 0;
-
-                // Iterate over each attendance record and create HTML elements to display their data
-                data.forEach(function(attendance) {
-                    $('.attendance-data').append(`
-                        <div class="table-cell-4">
-                            <div class="label-8">
-                                <div class="text-37">${attendance.EmployeeID}</div>
-                            </div>
-                            <div class="label-8">
-                                <div class="text-37">${attendance.AttendanceDate}</div>
-                            </div>
-                            <div class="label-8">
-                                <div class="text-37">${attendance.Status}</div>
-                            </div>
-                        </div>
-                    `);
-
-                    // Counting present and absent
-                    if (attendance.Status === 'Present') {
-                        presentCount++;
-                    } else if (attendance.Status === 'Absent') {
-                        absentCount++;
-                    }
-                });
-
+             
                 // Display present and absent counts
                 $('.attendance-data').append(`
     <div class="attendance-info">
