@@ -174,7 +174,22 @@ app.post('/addBenefit', (req, res) => {
 //     });
 // });
 
+app.post('/addDeduction', (req, res) => {
+    console.log(req.body);
+    const { DeductionId, EmployeeID, DeductionType, DeductionAmount, DeductedDate } = req.body;
 
+    const sql = INSERT INTO deductions (DeductionId, EmployeeID, DeductionType, DeductionAmount, DeductedDate) VALUES (?, ?, ?, ?, ?);
+
+    db.query(sql, [DeductionId, EmployeeID, DeductionType, DeductionAmount, DeductedDate], (err, result) => {
+        if (err) {
+            console.error('Error inserting deduction data:', err);
+            res.status(500).send('Failed to add deduction');
+            return;
+        }
+        console.log('Deduction added successfully');
+        res.status(201).send('Deduction added successfully');
+    });
+});
 
 
 
@@ -400,7 +415,29 @@ app.post('/addTax', (req, res) => {
 });
 
 
+app.get('/deductions', (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
+    const sql = `
+        SELECT 
+            EmployeeID, 
+            DeductionType,
+            DeductionAmount,
+            DATE_FORMAT(DeductedDate, '%m/%d/%Y') AS DeductedDate
+        FROM Deductions
+        LIMIT ?, ?`;
+
+    db.query(sql, [offset, limit], (err, results) => {
+        if (err) {
+            console.error('Error fetching deductions:', err);
+            res.status(500).send('Failed to fetch deductions');
+            return;
+        }
+        res.json(results);
+    });
+});
 
 
 // API endpoint to fetch attendance records based on employee ID
@@ -1160,7 +1197,34 @@ app.get('/employee/bonus/:employeeID', (req, res) => {
 
 
 
+app.get('/employee/deduction/:employeeID', (req, res) => {
+    const employeeID = req.params.employeeID;
 
+    // SQL query to fetch the sum of deduction amounts and the types for the provided employee ID
+    const sql = `
+      SELECT 
+        SUM(DeductionAmount) AS DeductionAmount,
+        GROUP_CONCAT(DeductionType SEPARATOR ', ') AS DeductionType
+      FROM 
+        deductions 
+      WHERE 
+        EmployeeID = ?
+      GROUP BY 
+        EmployeeID
+    `;
+
+    // Execute the SQL query with the provided employee ID
+    db.query(sql, [employeeID], (err, result) => {
+        if (err) {
+            console.error('Error executing SQL query:', err);
+            res.status(500).json({ error: 'Database query failed' });
+            return;
+        }
+
+        // Send the deduction data as JSON response
+        res.json(result[0] || { TotalDeductionAmount: 0, DeductionTypes: '' });
+    });
+});
 
 app.get('/employee/benefit/:employeeID', (req, res) => {
     const employeeID = req.params.employeeID;
