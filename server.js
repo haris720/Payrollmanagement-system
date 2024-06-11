@@ -134,7 +134,22 @@ app.post('/addBonus', (req, res) => {
         res.status(201).send('Bonus added successfully');
     });
 });
+app.post('/addBenefit', (req, res) => {
+    console.log(req.body);
+    const { BenefitId, EmployeeID, BenefitType, BenefitAmount, BenefitDate, Provider } = req.body;
 
+    const sql = INSERT INTO benefits (BenefitId, EmployeeID, BenefitType, BenefitAmount, BenefitDate, Provider) VALUES (?, ?, ?, ?, ?, ?);
+
+    db.query(sql, [BenefitId, EmployeeID, BenefitType, BenefitAmount, BenefitDate, Provider], (err, result) => {
+        if (err) {
+            console.error('Error inserting benefit data:', err);
+            res.status(500).send('Failed to add benefit');
+            return;
+        }
+        console.log('Benefit added successfully');
+        res.status(201).send('Benefit added successfully');
+    });
+});
 
 
 
@@ -234,7 +249,94 @@ app.post('/addAttendance', (req, res) => {
         });
     });
 });
+app.post('/addTax', (req, res) => {
+    const { TaxID, EmployeeID, WithholdingTax, SocialSecurityTax, OtherTax, OtherTaxDescription, TaxYear, TaxMonth } = req.body;
 
+    // Queries to fetch the necessary components from respective tables
+    const fetchPayrollQuery = SELECT BasicSalary, OvertimeHours FROM payroll WHERE EmployeeID = ?;
+    const fetchBonusQuery = SELECT BonusAmount as BonusAmount FROM bonuses WHERE EmployeeID = ?;
+    const fetchBenefitQuery = SELECT BenefitAmount as BenefitAmount FROM benefits WHERE EmployeeID = ?;
+    const fetchDeductionQuery = SELECT DeductionAmount as DeductionAmount FROM deductions WHERE EmployeeID = ?;
+
+    // Execute all queries in parallel
+    db.query(fetchPayrollQuery, [EmployeeID], (err, payrollResults) => {
+        if (err) {
+            console.error('Error fetching payroll data:', err);
+            res.status(500).json({ error: 'Failed to fetch payroll data' });
+            return;
+        }
+
+        if (payrollResults.length === 0) {
+            res.status(404).json({ error: 'No payroll data found for the given EmployeeID' });
+            return;
+        }
+
+        db.query(fetchBonusQuery, [EmployeeID], (err, bonusResults) => {
+            if (err) {
+                console.error('Error fetching bonus data:', err);
+                res.status(500).json({ error: 'Failed to fetch bonus data' });
+                return;
+            }
+
+            db.query(fetchBenefitQuery, [EmployeeID], (err, benefitResults) => {
+                if (err) {
+                    console.error('Error fetching benefit data:', err);
+                    res.status(500).json({ error: 'Failed to fetch benefit data' });
+                    return;
+                }
+
+                db.query(fetchDeductionQuery, [EmployeeID], (err, deductionResults) => {
+                    if (err) {
+                        console.error('Error fetching deduction data:', err);
+                        res.status(500).json({ error: 'Failed to fetch deduction data' });
+                        return;
+                    }
+
+                    const payroll = payrollResults[0];
+                    const bonus = bonusResults.length > 0 ? bonusResults[0].BonusAmount : 0;
+                    const benefit = benefitResults.length > 0 ? benefitResults[0].BenefitAmount : 0;
+                    const deduction = deductionResults.length > 0 ? deductionResults[0].DeductionAmount : 0;
+
+                    const totalSalary = payroll.BasicSalary + (payroll.OvertimeHours * 100) + bonus + benefit - deduction;
+                            console.log("TS: ".totalSalary);
+                    let IncomeTax;
+                    if (totalSalary > 200000) {
+                        IncomeTax = totalSalary * 0.07;
+                    } else if (totalSalary > 100000) {
+                        IncomeTax = totalSalary * 0.05;
+                    } else {
+                        IncomeTax = totalSalary * 0.025;
+                    }
+
+                    // Calculate WithholdingTax, SocialSecurityTax, and OtherTax based on percentages of totalSalary
+                    const withholdingTaxAmount = (totalSalary * WithholdingTax) / 100;
+                    const socialSecurityTaxAmount = (totalSalary * SocialSecurityTax) / 100;
+                    const otherTaxAmount = (totalSalary * OtherTax) / 100;
+
+                    // Calculate TaxAmount by summing up all tax components
+                    const TaxAmount = IncomeTax + withholdingTaxAmount + socialSecurityTaxAmount + otherTaxAmount;
+
+                    // Insert tax record for the employee
+                    const insertTaxQuery = `
+                        INSERT INTO employeetax (TaxID, EmployeeID, IncomeTax, WithholdingTax, SocialSecurityTax, OtherTax, OtherTaxDescription, TaxYear, TaxMonth, TaxAmount)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `;
+
+                    db.query(insertTaxQuery, [TaxID, EmployeeID, IncomeTax, withholdingTaxAmount, socialSecurityTaxAmount, otherTaxAmount, OtherTaxDescription, TaxYear, TaxMonth, TaxAmount], (err, result) => {
+                        if (err) {
+                            console.error('Error inserting tax record:', err);
+                            res.status(500).json({ error: 'Failed to add tax record' });
+                            return;
+                        }
+
+                        console.log('Tax record added successfully');
+                        res.status(201).json({ message: 'Tax record added successfully' });
+                    });
+                });
+            });
+        });
+    });
+});
 
 
 
@@ -528,7 +630,30 @@ app.post('/punchIn', (req, res) => {
 //         });
 //     });
 // });
+app.get('/benefits', (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
+    const sql = `
+        SELECT 
+            EmployeeID,
+            BenefitType,
+            BenefitAmount,
+            DATE_FORMAT(BenefitDate, '%m/%d/%Y') AS BenefitDate,
+            Provider
+        FROM benefits
+        LIMIT ?, ?`;
+
+    db.query(sql, [offset, limit], (err, results) => {
+        if (err) {
+            console.error('Error fetching benefits:', err);
+            res.status(500).send('Failed to fetch benefits');
+            return;
+        }
+        res.json(results);
+    });
+});
 
 app.post('/punchIn', (req, res) => {
     const { EmployeeID, PunchInTime } = req.body;
@@ -848,7 +973,63 @@ app.get('/attendance/present/:employeeID', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 });
-
+app.get('/employee/taxes/:employeeID', (req, res) => {
+    const employeeID = req.params.employeeID;
+  
+    // SQL query to get tax-related information for the provided employee ID
+    const sql = `
+      SELECT 
+        IncomeTax,
+        WithholdingTax,
+        SocialSecurityTax,
+        OtherTax,
+        OtherTaxDescription,
+        TaxYear,
+        TaxMonth,
+        TaxAmount
+      FROM 
+      employeetax
+      WHERE 
+        EmployeeID = ?
+      ORDER BY TaxYear DESC, TaxMonth DESC
+      LIMIT 1
+    `;
+  
+    // Execute the SQL query with the provided employee ID
+    db.query(sql, [employeeID], (err, result) => {
+        if (err) {
+            console.error('Error executing SQL query:', err);
+            res.status(500).json({ error: 'Database query failed' });
+            return;
+        }
+  
+        // Send the tax-related information as JSON response
+        if (result.length > 0) {
+            const taxInfo = result[0];
+            res.json({
+                incomeTax: taxInfo.IncomeTax,
+                withholdingTax: taxInfo.WithholdingTax,
+                socialSecurityTax: taxInfo.SocialSecurityTax,
+                otherTax: taxInfo.OtherTax,
+                otherTaxDescription: taxInfo.OtherTaxDescription,
+                taxYear: taxInfo.TaxYear,
+                taxMonth: taxInfo.TaxMonth,
+                taxAmount: taxInfo.TaxAmount
+            });
+        } else {
+            res.json({
+                incomeTax: null,
+                withholdingTax: null,
+                socialSecurityTax: null,
+                otherTax: null,
+                otherTaxDescription: null,
+                taxYear: null,
+                taxMonth: null,
+                taxAmount: null
+            });
+        }
+    });
+});
 
 
 
@@ -1074,7 +1255,63 @@ app.get('/employee/bonus/:employeeID', (req, res) => {
 });
 
 
-
+app.get('/employee/taxes/:employeeID', (req, res) => {
+    const employeeID = req.params.employeeID;
+  
+    // SQL query to get tax-related information for the provided employee ID
+    const sql = `
+      SELECT 
+        IncomeTax,
+        WithholdingTax,
+        SocialSecurityTax,
+        OtherTax,
+        OtherTaxDescription,
+        TaxYear,
+        TaxMonth,
+        TaxAmount
+      FROM 
+      employeetax
+      WHERE 
+        EmployeeID = ?
+      ORDER BY TaxYear DESC, TaxMonth DESC
+      LIMIT 1
+    `;
+  
+    // Execute the SQL query with the provided employee ID
+    db.query(sql, [employeeID], (err, result) => {
+        if (err) {
+            console.error('Error executing SQL query:', err);
+            res.status(500).json({ error: 'Database query failed' });
+            return;
+        }
+  
+        // Send the tax-related information as JSON response
+        if (result.length > 0) {
+            const taxInfo = result[0];
+            res.json({
+                incomeTax: taxInfo.IncomeTax,
+                withholdingTax: taxInfo.WithholdingTax,
+                socialSecurityTax: taxInfo.SocialSecurityTax,
+                otherTax: taxInfo.OtherTax,
+                otherTaxDescription: taxInfo.OtherTaxDescription,
+                taxYear: taxInfo.TaxYear,
+                taxMonth: taxInfo.TaxMonth,
+                taxAmount: taxInfo.TaxAmount
+            });
+        } else {
+            res.json({
+                incomeTax: null,
+                withholdingTax: null,
+                socialSecurityTax: null,
+                otherTax: null,
+                otherTaxDescription: null,
+                taxYear: null,
+                taxMonth: null,
+                taxAmount: null
+            });
+        }
+    });
+});
 
 
 
